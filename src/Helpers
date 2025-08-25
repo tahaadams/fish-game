@@ -1,0 +1,324 @@
+import tester.*; // The tester library
+import javalib.worldimages.*; // images, like RectangleImage or OverlayImages
+import javalib.funworld.*; // the abstract World class and the big-bang library
+import javalib.worldcanvas.*; // so we can view our images
+import java.awt.Color; // general colors (as triples of red,green,blue values)
+// and predefined colors (Red, Green, Yellow, Blue, Black, White)
+import java.util.Random;
+import java.util.function.BiFunction;
+
+// Interface for predicate-objects with siganture [T -> Boolean]
+interface IPred<T> {
+  boolean apply(T t);
+}
+
+// Interface for comparator-objects with siganture [T -> Boolean]
+interface IComparator<T> {
+  boolean apply(T t1, T t2);
+}
+
+// Interface for one-argument function-object with signature [A -> R]
+interface IFunc<A, R> {
+  R apply(A arg);
+}
+
+// Interface for two-argument function-objects with signature [A1, A2 -> R]
+interface IFunc2<A1, A2, R> {
+  R apply(A1 arg1, A2 arg2);
+}
+
+class Utils {
+
+  // returns a list of identities that pass through a one argument function of length n
+  <U> IList<U> buildlist(int n, IFunc<Integer, U> func) {
+    if (n == 0) {
+      return new MtList<U>();
+    }
+    else {
+      return new ConsList<U>(func.apply(n), buildlist(n, func));
+    }
+  }
+  
+  // returns a list of T of length n
+  <T> IList<T> makelist(int n, T t) {
+    if (n == 0) {
+      return new MtList<T>();
+    }
+    else {
+      return new ConsList<T>(t, makelist(n, t));
+    }
+  }
+
+}
+
+// represent a list
+interface IList<T> {
+
+  // returns the length of the given list of objects
+  int length();
+
+  // returns only the objects of a given list that pass a certain predicate
+  IList<T> filter(IPred<T> pred);
+
+  // return the list of objects rearranged according to the given comparator
+  IList<T> sort(IComparator<T> comp);
+
+  // return the list of objects with the new object arranged according to the
+  // given comparator
+  IList<T> insert(T t, IComparator<T> comp);
+
+  // returns the list of objects after it has passed through a one-argument
+  // function
+  <U> IList<U> map(IFunc<T, U> func);
+
+  // returns a boolean determining whether or not all objects in the list pass a
+  // certain predicate
+  boolean andmap(IPred<T> func);
+
+  // returns a boolean determining whether or not any objects in the list pass a
+  // certain predicate
+  boolean ormap(IPred<T> func);
+
+  // returns the base value of a list of objects after it has passed through a
+  // two-argument function from right to left
+  <U> U foldr(IFunc2<T, U, U> func, U base);
+
+  // returns the base value of a list of objects after it has passed through a
+  // two argument function from left to right
+  <U> U foldl(IFunc2<T, U, U> func, U base);
+
+  // returns a list of objects containing the values of two list of objects
+  IList<T> append(IList<T> that);
+
+  // returns the nth object in the list, or null if no such object exists in said
+  // list
+  Object listref(int n);
+
+  // returns the nth tail of objects , or an empty list if no such tail exists in
+  // said list
+  IList<T> listtail(int n);
+
+  // returns the given list of objects in a reverse order
+  IList<T> reverse();
+
+  IList<T> swap(IList<T> that);
+
+  // returns a list of objects containing the result of two lists passing through
+  // a two argument function
+  <U, R> IList<R> convolve(IList<U> that, IFunc2<T, U, R> converter);
+
+  <U, R> IList<R> convolveHelper(U thatFirst, IList<U> thatRest, IFunc2<U, T, R> converter);
+
+}
+
+// represent a empty list
+class MtList<T> implements IList<T> {
+
+  // returns the length of the given list of objects
+  public int length() {
+    return 0;
+  }
+
+  // returns only the objects of a given list that pass a certain predicate
+  public IList<T> filter(IPred<T> pred) {
+    return this;
+  }
+
+  // return the list of objects rearranged according to the given comparator
+  public IList<T> sort(IComparator<T> comp) {
+    return this;
+  }
+
+  // return the list of objects with the new object arranged according to the
+  // given comparator
+  public IList<T> insert(T t, IComparator<T> comp) {
+    return new ConsList<T>(t, this);
+  }
+
+  // returns the list of objects after it has passed through a one-argument
+  // function
+  public <U> IList<U> map(IFunc<T, U> func) {
+    return new MtList<U>();
+  }
+
+  // returns a boolean determining whether or not all objects in the list pass a
+  // certain predicate
+  public boolean andmap(IPred<T> func) {
+    return true;
+  }
+
+  // returns a boolean determining whether or not any objects in the list pass a
+  // certain predicate
+  public boolean ormap(IPred<T> func) {
+    return false;
+  }
+
+  // returns the base value of a list of objects after it has passed through a
+  // two-argument function from right to left
+  public <U> U foldr(IFunc2<T, U, U> func, U base) {
+    return base;
+  }
+
+  // returns the base value of a list of objects after it has passed through a
+  // two-argument function from left to right
+  public <U> U foldl(IFunc2<T, U, U> func, U base) {
+    return base;
+  }
+
+  // returns a list of objects containing the values of two list of objects
+  public IList<T> append(IList<T> that) {
+    return that;
+  }
+
+  // returns the nth object in the list, or null if no such object exists in said
+  // list
+  public Object listref(int n) {
+    return null;
+  }
+
+  // returns the nth tail of objects , or an empty list if no such tail exists in
+  // said list
+  public IList<T> listtail(int n) {
+    return this;
+  }
+
+  // returns the given list of objects in a reverse order
+  public IList<T> reverse() {
+    return this;
+  }
+
+  public IList<T> swap(IList<T> that) {
+    return that;
+  }
+
+  // returns a list of objects containing the result of two lists passing through
+  // a two argument function
+  public <U, R> IList<R> convolve(IList<U> that, IFunc2<T, U, R> func) {
+    return new MtList<R>();
+  }
+
+  public <U, R> IList<R> convolveHelper(U thatFirst, IList<U> thatRest, IFunc2<U, T, R> func) {
+    return new MtList<R>();
+
+  }
+
+}
+
+// represent a non-empty list
+class ConsList<T> implements IList<T> {
+  T first;
+  IList<T> rest;
+
+  ConsList(T first, IList<T> rest) {
+    this.first = first;
+    this.rest = rest;
+  }
+
+  // returns the length of the given list of objects
+  public int length() {
+    return 1 + this.rest.length();
+  }
+
+  // returns only the objects of a given list that pass a certain predicate
+  public IList<T> filter(IPred<T> pred) {
+    if (pred.apply(this.first)) {
+      return new ConsList<T>(this.first, this.rest.filter(pred));
+    }
+    else {
+      return this.rest.filter(pred);
+    }
+  }
+
+  // return the list of objects rearranged according to the given comparator
+  public IList<T> sort(IComparator<T> comp) {
+    return this.rest.sort(comp).insert(this.first, comp);
+  }
+
+  // return the list of objects with the new object arranged according to the
+  // given comparator
+  public IList<T> insert(T t, IComparator<T> comp) {
+    if (comp.apply(this.first, t)) {
+      return new ConsList<T>(this.first, this.rest.insert(t, comp));
+    }
+    else {
+      return new ConsList<T>(t, this);
+    }
+  }
+
+  // returns the list of objects after it has passed through a one-argument
+  // function
+  public <U> IList<U> map(IFunc<T, U> func) {
+    return new ConsList<U>(func.apply(this.first), this.rest.map(func));
+  }
+
+  // returns a boolean determining whether or not all objects in the list pass a
+  // certain predicate
+  public boolean andmap(IPred<T> func) {
+    return func.apply(this.first) && this.rest.andmap(func);
+  }
+
+  // returns a boolean determining whether or not all objects in the list pass a
+  // certain predicate
+  public boolean ormap(IPred<T> func) {
+    return func.apply(this.first) || this.rest.ormap(func);
+  }
+
+  // returns the base value of a list of objects after it has passed through a
+  // two-argument function from right to left
+  public <U> U foldr(IFunc2<T, U, U> func, U base) {
+    return func.apply(this.first, this.rest.foldr(func, base));
+  }
+
+  // returns the base value of a list of objects after it has passed through a
+  // two-argument function from left to right
+  public <U> U foldl(IFunc2<T, U, U> func, U base) {
+    return this.reverse().foldr(func, base);
+  }
+
+  // returns a list of objects containing the values of two list of objects
+  public IList<T> append(IList<T> that) {
+    return new ConsList<T>(this.first, this.rest.append(that));
+  }
+
+  // returns the nth object in the list, or null if no such object exists in said
+  // list
+  public Object listref(int n) {
+    if (n == 1) {
+      return this.first;
+    }
+    else {
+      return this.rest.listref(n - 1);
+    }
+  }
+
+  // returns the nth tail of objects , or an empty list if no such tail exists in
+  // said list
+  public IList<T> listtail(int n) {
+    if (n == 1) {
+      return this;
+    }
+    else {
+      return this.rest.listtail(n - 1);
+    }
+  }
+
+  // returns the given list of objects in a reverse order
+  public IList<T> reverse() {
+    return this.rest.swap(new ConsList<T>(this.first, new MtList<T>()));
+  }
+
+  public IList<T> swap(IList<T> that) {
+    return this.rest.swap(new ConsList<T>(this.first, that));
+  }
+
+  // returns a list of objects containing the result of two lists passing through
+  // a two argument function
+  public <U, R> IList<R> convolve(IList<U> that, IFunc2<T, U, R> func) {
+    return that.convolveHelper(this.first, this.rest, func);
+  }
+
+  public <U, R> IList<R> convolveHelper(U thatFirst, IList<U> thatRest, IFunc2<U, T, R> func) {
+    return new ConsList<R>(func.apply(thatFirst, this.first), thatRest.convolve(this.rest, func));
+  }
+
+}
