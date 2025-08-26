@@ -1,3 +1,5 @@
+For best results, access via Eclipse IDE for Java.
+
 ## Overview
 
 Fish Game is a side-scrolling game where you play as a fish trying to survive in a pond full of other fish. The goal is to eat smaller fish to gain experience and level up, while avoiding being eaten by larger fish. The game ends when your fish reaches the maximum level or is eaten by an enemy.
